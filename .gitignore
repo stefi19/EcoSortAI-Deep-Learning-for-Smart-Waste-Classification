@@ -4,7 +4,7 @@ __pycache__/
 *.pyo
 .ipynb_checkpoints/
 
-# Model files (large binaries — place manually in backend/saved_model/)
+# Model weights (place manually in app/saved_model/)
 *.pth
 *.pt
 *.onnx
@@ -21,20 +21,13 @@ env/
 # macOS
 .DS_Store
 
-# Node / Expo
-node_modules/
-.expo/
-dist/
-build/
+# Logs
+backend_server.log
+backend_error.log
+nbconvert_log.txt
 
-# Editor
-.vscode/
+# SSL certs (generated locally by gen_cert.py)
+app/cert/
 
 # Project-specific
 CLAUDE.md
-nbconvert_log.txt
-backend_server.log
-backend_error.log
-
-# iOS / Xcode (regenerate with: cd mobile_app && npm install && npx expo prebuild --platform ios)
-mobile_app/ios/

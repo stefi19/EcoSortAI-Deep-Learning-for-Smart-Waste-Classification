@@ -4,8 +4,21 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>EcoSortAI</title>
+
+  <!-- PWA -->
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#22c55e" />
+
+  <!-- iOS PWA -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="EcoSortAI" />
+  <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" sizes="32x32" href="/icons/favicon-32.png" />
+
   <style>
-    /* ── Reset & base ─────────────────────────────────────────── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -21,237 +34,200 @@
 
     html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
 
-    /* ── Layout ───────────────────────────────────────────────── */
-    #app {
-      display: flex;
-      flex-direction: column;
-      height: 100dvh;           /* dynamic viewport for iPhone notch / home bar */
-      position: relative;
-    }
+    /* ── Layout ── */
+    #app { display: flex; flex-direction: column; height: 100dvh; position: relative; }
 
-    /* ── Header ───────────────────────────────────────────────── */
+    /* ── Header ── */
     header {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
+      display: flex; align-items: center; justify-content: center; gap: 8px;
       padding: env(safe-area-inset-top, 16px) 20px 14px;
       background: linear-gradient(180deg, rgba(11,17,32,.95) 0%, transparent 100%);
-      position: absolute;
-      top: 0; left: 0; right: 0;
-      z-index: 10;
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
     }
     header .logo { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
     header .logo span { color: var(--green); }
     header .badge {
       font-size: 11px; font-weight: 600; color: var(--green);
-      background: rgba(34,197,94,.15);
-      border: 1px solid rgba(34,197,94,.3);
+      background: rgba(34,197,94,.15); border: 1px solid rgba(34,197,94,.3);
       padding: 3px 9px; border-radius: 99px;
     }
 
-    /* ── Camera viewport ──────────────────────────────────────── */
-    #camera-wrap {
-      flex: 1;
-      position: relative;
-      overflow: hidden;
-    }
-    #video {
-      width: 100%; height: 100%;
-      object-fit: cover;
-    }
+    /* ── Camera ── */
+    #camera-wrap { flex: 1; position: relative; overflow: hidden; }
+    #video { width: 100%; height: 100%; object-fit: cover; }
 
     /* Corner brackets */
-    .bracket {
-      position: absolute;
-      width: 52px; height: 52px;
-      border-color: var(--green);
-      border-style: solid;
-      border-width: 0;
-      opacity: .8;
-    }
-    .bracket.tl { top: 20%; left: 10%; border-top-width: 3px; border-left-width: 3px;  border-radius: 8px 0 0 0; }
-    .bracket.tr { top: 20%; right: 10%; border-top-width: 3px; border-right-width: 3px; border-radius: 0 8px 0 0; }
-    .bracket.bl { bottom: 28%; left: 10%; border-bottom-width: 3px; border-left-width: 3px;  border-radius: 0 0 0 8px; }
-    .bracket.br { bottom: 28%; right: 10%; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 8px 0; }
+    .bracket { position: absolute; width: 52px; height: 52px; border-color: var(--green); border-style: solid; border-width: 0; opacity: .8; }
+    .bracket.tl { top: 18%; left: 10%; border-top-width: 3px; border-left-width: 3px; border-radius: 8px 0 0 0; }
+    .bracket.tr { top: 18%; right: 10%; border-top-width: 3px; border-right-width: 3px; border-radius: 0 8px 0 0; }
+    .bracket.bl { bottom: 26%; left: 10%; border-bottom-width: 3px; border-left-width: 3px; border-radius: 0 0 0 8px; }
+    .bracket.br { bottom: 26%; right: 10%; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 8px 0; }
 
-    /* Scanning line animation */
+    /* Scan line */
     .scan-line {
-      position: absolute;
-      left: 10%; right: 10%;
-      top: 20%; height: 2px;
+      position: absolute; left: 10%; right: 10%; top: 18%; height: 2px;
       background: linear-gradient(90deg, transparent, var(--green), transparent);
       animation: scan 2.5s ease-in-out infinite;
     }
     @keyframes scan {
-      0%   { top: 20%; opacity: 0; }
+      0%   { top: 18%; opacity: 0; }
       10%  { opacity: 1; }
       90%  { opacity: 1; }
-      100% { top: 72%; opacity: 0; }
+      100% { top: 74%; opacity: 0; }
     }
 
-    /* Hint label */
     .hint {
-      position: absolute;
-      bottom: 30%; left: 50%; transform: translateX(-50%);
-      font-size: 13px; color: var(--muted);
-      background: rgba(11,17,32,.6);
-      backdrop-filter: blur(8px);
-      padding: 5px 14px; border-radius: 99px;
-      white-space: nowrap;
-      pointer-events: none;
+      position: absolute; bottom: 28%; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: var(--muted); background: rgba(11,17,32,.6);
+      backdrop-filter: blur(8px); padding: 5px 14px; border-radius: 99px;
+      white-space: nowrap; pointer-events: none;
     }
 
-    /* ── Bottom bar ───────────────────────────────────────────── */
+    /* ── Bottom bar ── */
     #bottom-bar {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 6px;
+      display: flex; flex-direction: column; align-items: center; gap: 6px;
       padding: 16px 20px env(safe-area-inset-bottom, 24px);
       background: linear-gradient(0deg, rgba(11,17,32,.97) 0%, transparent 100%);
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      z-index: 10;
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
     }
-
     #capture-btn {
-      width: 72px; height: 72px;
-      border-radius: 50%;
-      border: 4px solid var(--green);
-      background: transparent;
-      cursor: pointer;
-      position: relative;
-      transition: transform .15s, box-shadow .15s;
-      -webkit-tap-highlight-color: transparent;
+      width: 72px; height: 72px; border-radius: 50%; border: 4px solid var(--green);
+      background: transparent; cursor: pointer; position: relative;
+      transition: transform .15s, box-shadow .15s; -webkit-tap-highlight-color: transparent;
     }
     #capture-btn::after {
-      content: '';
-      position: absolute;
-      inset: 6px;
-      border-radius: 50%;
-      background: var(--green);
-      transition: background .15s;
+      content: ''; position: absolute; inset: 6px; border-radius: 50%;
+      background: var(--green); transition: background .15s;
     }
     #capture-btn:active { transform: scale(.93); }
     #capture-btn.loading::after { background: var(--green-dim); animation: pulse .8s infinite; }
-    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
-
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
     #capture-label { font-size: 12px; color: var(--muted); letter-spacing: .5px; }
 
-    /* ── Result card ──────────────────────────────────────────── */
+    /* ── Result card ── */
     #result-card {
-      position: absolute;
-      bottom: 0; left: 0; right: 0;
-      background: var(--surface);
-      border-radius: var(--radius) var(--radius) 0 0;
-      padding: 0 24px env(safe-area-inset-bottom, 32px);
+      position: absolute; bottom: 0; left: 0; right: 0;
+      background: var(--surface); border-radius: var(--radius) var(--radius) 0 0;
       z-index: 20;
-      transform: translateY(100%);
-      transition: transform .4s cubic-bezier(.32,1,.5,1);
+      max-height: 88dvh; overflow-y: auto;
+      transform: translateY(100%); transition: transform .4s cubic-bezier(.32,1,.5,1);
     }
     #result-card.visible { transform: translateY(0); }
+    #result-card::-webkit-scrollbar { display: none; }
 
-    .card-handle {
-      width: 40px; height: 4px;
-      background: rgba(255,255,255,.15);
-      border-radius: 2px;
-      margin: 14px auto 20px;
+    .card-handle { width: 40px; height: 4px; background: rgba(255,255,255,.15); border-radius: 2px; margin: 14px auto 0; }
+
+    /* Captured image in result */
+    #res-image-wrap { position: relative; width: 100%; height: 200px; overflow: hidden; display: none; }
+    #res-image { width: 100%; height: 100%; object-fit: cover; }
+    #res-image-wrap::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(to bottom, transparent 40%, var(--surface) 100%);
+    }
+    #res-emoji-badge {
+      position: absolute; bottom: 12px; right: 14px;
+      font-size: 32px; z-index: 2;
+      background: rgba(0,0,0,.45); border-radius: 99px;
+      padding: 4px 10px;
     }
 
-    .result-header {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      margin-bottom: 18px;
-    }
-    .result-emoji {
-      font-size: 56px;
-      line-height: 1;
-      filter: drop-shadow(0 0 16px currentColor);
-    }
-    .result-title { flex: 1; }
-    .result-label {
-      font-size: 26px;
-      font-weight: 800;
-      text-transform: capitalize;
-      letter-spacing: -.5px;
-    }
-    .result-conf {
-      font-size: 13px;
-      color: var(--muted);
-      margin-top: 2px;
-    }
+    .result-body { padding: 16px 20px env(safe-area-inset-bottom, 28px); }
+
+    .result-header { margin-bottom: 16px; }
+    .result-label { font-size: 30px; font-weight: 800; text-transform: capitalize; letter-spacing: -.5px; }
+    .result-material { font-size: 13px; color: var(--muted); margin-top: 4px; }
 
     /* Confidence bar */
-    .conf-bar-wrap {
-      height: 6px;
-      background: rgba(255,255,255,.08);
-      border-radius: 3px;
-      margin: 12px 0 18px;
-      overflow: hidden;
+    .conf-row { display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .conf-label { font-size: 12px; color: var(--muted); font-weight: 500; text-transform: uppercase; letter-spacing: .5px; }
+    .conf-pct { font-size: 13px; font-weight: 700; }
+    .conf-bar-wrap { height: 7px; background: rgba(255,255,255,.08); border-radius: 4px; overflow: hidden; margin-bottom: 18px; }
+    .conf-bar { height: 100%; border-radius: 4px; width: 0; transition: width .7s cubic-bezier(.4,0,.2,1) .15s; }
+
+    /* Low confidence warning */
+    #res-warning {
+      display: none; align-items: center; gap: 10px;
+      background: rgba(245,158,11,.12); border: 1px solid rgba(245,158,11,.3);
+      border-radius: 12px; padding: 12px 14px; margin-bottom: 16px;
     }
-    .conf-bar {
-      height: 100%;
-      border-radius: 3px;
-      width: 0;
-      transition: width .6s cubic-bezier(.4,0,.2,1) .2s;
-    }
+    #res-warning.show { display: flex; }
+    #res-warning span { font-size: 13px; color: #fbbf24; font-weight: 500; line-height: 1.4; }
 
     /* Bin chip */
     .bin-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 7px;
-      font-size: 14px;
-      font-weight: 600;
-      padding: 8px 16px;
-      border-radius: 99px;
-      margin-bottom: 14px;
+      display: inline-flex; align-items: center; gap: 8px; font-size: 14px;
+      font-weight: 700; padding: 9px 16px; border-radius: 99px; margin-bottom: 18px;
       border: 1.5px solid;
     }
 
-    .tip-text {
-      font-size: 14px;
-      color: var(--muted);
-      line-height: 1.6;
-      margin-bottom: 22px;
+    /* Section title */
+    .section-title {
+      font-size: 11px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .7px; margin-bottom: 10px;
     }
 
+    /* Top-3 list */
+    #top3-list { margin-bottom: 18px; display: flex; flex-direction: column; gap: 8px; }
+    .top3-row {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.04); border-radius: 12px; padding: 10px 12px;
+    }
+    .top3-row.top3-first { border: 1px solid rgba(34,197,94,.3); background: rgba(34,197,94,.06); }
+    .top3-rank {
+      width: 24px; height: 24px; border-radius: 12px; background: rgba(255,255,255,.1);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 700; flex-shrink: 0;
+    }
+    .top3-row.top3-first .top3-rank { background: var(--green); color: #000; }
+    .top3-content { flex: 1; }
+    .top3-label-row { display: flex; justify-content: space-between; margin-bottom: 5px; }
+    .top3-name { font-size: 14px; font-weight: 500; text-transform: capitalize; }
+    .top3-row.top3-first .top3-name { font-weight: 700; color: var(--green); }
+    .top3-pct { font-size: 13px; color: var(--muted); }
+    .top3-row.top3-first .top3-pct { color: var(--green); font-weight: 700; }
+    .mini-bar-wrap { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; overflow: hidden; }
+    .mini-bar { height: 100%; border-radius: 2px; background: rgba(255,255,255,.25); }
+    .top3-row.top3-first .mini-bar { background: var(--green); }
+
+    /* Advice */
+    .advice-card {
+      background: rgba(255,255,255,.04); border-radius: 14px; padding: 14px;
+      font-size: 14px; color: var(--muted); line-height: 1.6; margin-bottom: 20px;
+    }
+
+    /* Scan again */
     #scan-again {
-      width: 100%;
-      padding: 15px;
-      border-radius: 14px;
-      border: none;
-      background: var(--green);
-      color: #000;
-      font-size: 16px;
-      font-weight: 700;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      transition: background .15s, transform .1s;
+      width: 100%; padding: 15px; border-radius: 14px; border: none;
+      background: var(--green); color: #000; font-size: 16px; font-weight: 700;
+      cursor: pointer; -webkit-tap-highlight-color: transparent;
+      transition: opacity .15s, transform .1s;
     }
-    #scan-again:active { transform: scale(.98); background: var(--green-dim); }
+    #scan-again:active { transform: scale(.98); opacity: .85; }
 
-    /* Error toast */
+    /* ── Toast ── */
     #toast {
-      position: absolute;
-      top: calc(env(safe-area-inset-top, 16px) + 60px);
-      left: 50%; transform: translateX(-50%);
-      background: #dc2626;
-      color: #fff;
-      font-size: 13px;
-      padding: 8px 18px;
-      border-radius: 99px;
-      opacity: 0;
-      transition: opacity .3s;
-      white-space: nowrap;
-      z-index: 30;
-      pointer-events: none;
+      position: absolute; top: calc(env(safe-area-inset-top, 16px) + 64px); left: 16px; right: 16px;
+      background: #dc2626; color: #fff; font-size: 13px; font-weight: 600;
+      padding: 12px 18px; border-radius: 14px; text-align: center;
+      opacity: 0; transition: opacity .3s; z-index: 30; pointer-events: none;
     }
     #toast.show { opacity: 1; }
 
-    /* Hidden canvas for capture */
+    /* ── Install banner ── */
+    #install-banner {
+      display: none; align-items: center; justify-content: space-between; gap: 12px;
+      position: absolute; bottom: calc(env(safe-area-inset-bottom, 0px) + 100px);
+      left: 16px; right: 16px;
+      background: rgba(17,24,39,.96); border: 1px solid rgba(34,197,94,.3);
+      border-radius: 16px; padding: 14px 16px; z-index: 15;
+      backdrop-filter: blur(12px);
+    }
+    #install-banner.show { display: flex; }
+    #install-banner p { font-size: 13px; color: var(--text); flex: 1; line-height: 1.4; }
+    #install-banner p strong { color: var(--green); }
+    #install-btn { background: var(--green); color: #000; border: none; border-radius: 10px; padding: 9px 16px; font-weight: 700; font-size: 13px; cursor: pointer; white-space: nowrap; }
+    #install-dismiss { background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; padding: 4px; }
+
     canvas { display: none; }
   </style>
 </head>
@@ -260,7 +236,7 @@
 
   <header>
     <div class="logo">Eco<span>Sort</span>AI</div>
-    <div class="badge">AI-Powered</div>
+    <div class="badge">AI Recycling</div>
   </header>
 
   <div id="camera-wrap">
@@ -270,7 +246,7 @@
     <div class="bracket bl"></div>
     <div class="bracket br"></div>
     <div class="scan-line"></div>
-    <div class="hint">Point at any waste item</div>
+    <div class="hint">Point at one waste item</div>
   </div>
 
   <div id="bottom-bar">
@@ -281,33 +257,74 @@
   <!-- Result card -->
   <div id="result-card">
     <div class="card-handle"></div>
-    <div class="result-header">
-      <div class="result-emoji" id="res-emoji">♻️</div>
-      <div class="result-title">
-        <div class="result-label" id="res-label">—</div>
-        <div class="result-conf" id="res-conf">Confidence: —</div>
-      </div>
+
+    <!-- Captured image preview -->
+    <div id="res-image-wrap">
+      <img id="res-image" src="" alt="Scanned item" />
+      <div id="res-emoji-badge"></div>
     </div>
-    <div class="conf-bar-wrap"><div class="conf-bar" id="res-bar"></div></div>
-    <div class="bin-chip" id="res-bin">🗑️ —</div>
-    <p class="tip-text" id="res-tip">—</p>
-    <button id="scan-again">Scan Again</button>
+
+    <div class="result-body">
+      <div class="result-header">
+        <div class="result-label" id="res-label">—</div>
+        <div class="result-material" id="res-material">—</div>
+      </div>
+
+      <!-- Confidence -->
+      <div class="conf-row">
+        <span class="conf-label">Confidence</span>
+        <span class="conf-pct" id="res-conf-pct">—</span>
+      </div>
+      <div class="conf-bar-wrap"><div class="conf-bar" id="res-bar"></div></div>
+
+      <!-- Low confidence warning -->
+      <div id="res-warning">
+        <span>⚠️</span>
+        <span id="res-warning-text"></span>
+      </div>
+
+      <!-- Bin category chip -->
+      <div class="bin-chip" id="res-bin">—</div>
+
+      <!-- Top-3 predictions -->
+      <div class="section-title">Top predictions</div>
+      <div id="top3-list"></div>
+
+      <!-- Recycling advice -->
+      <div class="section-title">Recycling advice</div>
+      <div class="advice-card" id="res-advice">—</div>
+
+      <button id="scan-again">📷 &nbsp;Scan Another Item</button>
+    </div>
   </div>
 
-  <div id="toast">Something went wrong. Please try again.</div>
+  <div id="toast"></div>
+
+  <!-- Android install banner -->
+  <div id="install-banner">
+    <p><strong>Add to Home Screen</strong><br>Use EcoSortAI like a native app — no browser needed.</p>
+    <button id="install-btn">Install</button>
+    <button id="install-dismiss" aria-label="Dismiss">✕</button>
+  </div>
 
   <canvas id="canvas"></canvas>
 </div>
 
 <script>
-  const video      = document.getElementById('video');
-  const canvas     = document.getElementById('canvas');
-  const captureBtn = document.getElementById('capture-btn');
-  const resultCard = document.getElementById('result-card');
-  const toast      = document.getElementById('toast');
-  const scanAgain  = document.getElementById('scan-again');
+  // ── Elements ────────────────────────────────────────────────────────────────
+  const video       = document.getElementById('video');
+  const canvas      = document.getElementById('canvas');
+  const captureBtn  = document.getElementById('capture-btn');
+  const resultCard  = document.getElementById('result-card');
+  const toast       = document.getElementById('toast');
+  const scanAgain   = document.getElementById('scan-again');
 
-  // ── Start camera ──────────────────────────────────────────────
+  // ── Service Worker ──────────────────────────────────────────────────────────
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('/sw.js').catch(() => {});
+  }
+
+  // ── Camera ──────────────────────────────────────────────────────────────────
   async function startCamera() {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -315,78 +332,144 @@
         audio: false,
       });
       video.srcObject = stream;
-    } catch (err) {
-      showToast('Camera access denied. Please allow camera permissions.');
+    } catch {
+      showToast('Camera access denied — allow camera in browser settings.');
     }
   }
 
-  // ── Capture & predict ─────────────────────────────────────────
+  // ── Capture & predict ────────────────────────────────────────────────────────
   captureBtn.addEventListener('click', async () => {
     if (captureBtn.classList.contains('loading')) return;
 
-    // Draw current frame to hidden canvas
     canvas.width  = video.videoWidth  || 640;
     canvas.height = video.videoHeight || 480;
     canvas.getContext('2d').drawImage(video, 0, 0);
 
     captureBtn.classList.add('loading');
+    document.getElementById('capture-label').textContent = 'ANALYZING…';
 
     canvas.toBlob(async (blob) => {
+      // Show captured image in result card
+      const imageUrl = URL.createObjectURL(blob);
+
       try {
         const form = new FormData();
         form.append('file', blob, 'frame.jpg');
-
         const res = await fetch('/predict', { method: 'POST', body: form });
         if (!res.ok) throw new Error('Server error');
         const data = await res.json();
-        showResult(data);
+        showResult(data, imageUrl);
       } catch {
-        showToast('Could not reach the server. Is it running?');
+        showToast('Could not reach the server. Is the backend running?');
+        URL.revokeObjectURL(imageUrl);
       } finally {
         captureBtn.classList.remove('loading');
+        document.getElementById('capture-label').textContent = 'TAP TO SCAN';
       }
     }, 'image/jpeg', 0.85);
   });
 
-  // ── Show result ───────────────────────────────────────────────
-  function showResult({ label, confidence, emoji, bin, color, tip }) {
-    document.getElementById('res-emoji').textContent = emoji;
-    document.getElementById('res-label').textContent = label;
-    document.getElementById('res-conf').textContent  = `Confidence: ${confidence}%`;
+  // ── Show result ──────────────────────────────────────────────────────────────
+  function showResult(data, imageUrl) {
+    const pct = Math.round((data.confidence ?? 0) * 100);
 
+    // Image preview
+    const imgWrap = document.getElementById('res-image-wrap');
+    const imgEl   = document.getElementById('res-image');
+    if (imageUrl) {
+      imgEl.src = imageUrl;
+      imgWrap.style.display = 'block';
+      document.getElementById('res-emoji-badge').textContent = data.emoji ?? '♻️';
+    }
+
+    // Class + material
+    document.getElementById('res-label').textContent    = data.predicted_class ?? '—';
+    document.getElementById('res-material').textContent = data.material ?? '';
+
+    // Confidence bar
     const bar = document.getElementById('res-bar');
-    bar.style.background = color;
-    // Force reflow so the transition fires
+    bar.style.background = pct >= 70 ? '#22c55e' : '#f59e0b';
+    document.getElementById('res-conf-pct').textContent = pct + '%';
+    document.getElementById('res-conf-pct').style.color = pct >= 70 ? '#22c55e' : '#f59e0b';
     bar.style.width = '0';
-    requestAnimationFrame(() => requestAnimationFrame(() => {
-      bar.style.width = `${confidence}%`;
-    }));
+    requestAnimationFrame(() => requestAnimationFrame(() => { bar.style.width = pct + '%'; }));
 
-    const binEl = document.getElementById('res-bin');
-    binEl.textContent   = bin;
-    binEl.style.color   = color;
-    binEl.style.borderColor = color;
-    binEl.style.background  = `${color}18`;
+    // Warning
+    const warn = document.getElementById('res-warning');
+    if (data.low_confidence && data.warning) {
+      document.getElementById('res-warning-text').textContent = data.warning;
+      warn.classList.add('show');
+    } else {
+      warn.classList.remove('show');
+    }
 
-    document.getElementById('res-tip').textContent = tip;
+    // Bin chip
+    const chip = document.getElementById('res-bin');
+    chip.textContent   = (data.emoji ?? '') + '  ' + (data.bin_category ?? '—');
+    chip.style.color   = data.color ?? '#22c55e';
+    chip.style.borderColor = data.color ?? '#22c55e';
+    chip.style.background  = (data.color ?? '#22c55e') + '18';
+
+    // Top-3
+    const list = document.getElementById('top3-list');
+    list.innerHTML = '';
+    (data.top_3_predictions ?? []).forEach((p, i) => {
+      const pctI = Math.round(p.confidence * 100);
+      const row  = document.createElement('div');
+      row.className = 'top3-row' + (i === 0 ? ' top3-first' : '');
+      row.innerHTML = `
+        <div class="top3-rank">${i + 1}</div>
+        <div class="top3-content">
+          <div class="top3-label-row">
+            <span class="top3-name">${p.class}</span>
+            <span class="top3-pct">${pctI}%</span>
+          </div>
+          <div class="mini-bar-wrap"><div class="mini-bar" style="width:${pctI}%"></div></div>
+        </div>`;
+      list.appendChild(row);
+    });
+
+    // Advice
+    document.getElementById('res-advice').textContent = data.recycling_advice ?? '';
 
     resultCard.classList.add('visible');
   }
 
-  // ── Scan again ────────────────────────────────────────────────
+  // ── Scan again ────────────────────────────────────────────────────────────────
   scanAgain.addEventListener('click', () => {
     resultCard.classList.remove('visible');
-    document.getElementById('res-bar').style.width = '0';
+    const bar = document.getElementById('res-bar');
+    bar.style.transition = 'none'; bar.style.width = '0';
+    setTimeout(() => { bar.style.transition = ''; }, 50);
+    document.getElementById('res-image-wrap').style.display = 'none';
+    URL.revokeObjectURL(document.getElementById('res-image').src);
   });
 
-  // ── Toast helper ──────────────────────────────────────────────
+  // ── Toast ────────────────────────────────────────────────────────────────────
   let toastTimer;
   function showToast(msg) {
-    toast.textContent = msg;
-    toast.classList.add('show');
+    toast.textContent = msg; toast.classList.add('show');
     clearTimeout(toastTimer);
     toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
   }
+
+  // ── PWA install prompt (Android/Chrome) ──────────────────────────────────────
+  let deferredInstall = null;
+  window.addEventListener('beforeinstallprompt', e => {
+    e.preventDefault();
+    deferredInstall = e;
+    document.getElementById('install-banner').classList.add('show');
+  });
+  document.getElementById('install-btn').addEventListener('click', async () => {
+    if (!deferredInstall) return;
+    deferredInstall.prompt();
+    const { outcome } = await deferredInstall.userChoice;
+    if (outcome === 'accepted') document.getElementById('install-banner').classList.remove('show');
+    deferredInstall = null;
+  });
+  document.getElementById('install-dismiss').addEventListener('click', () => {
+    document.getElementById('install-banner').classList.remove('show');
+  });
 
   startCamera();
 </script>

@@ -1,40 +1,63 @@
 #!/bin/bash
-# EcoSortAI — pornește backend-ul FastAPI
-# Dublu-click pe acest fișier sau rulează: ./start_backend.sh
+# EcoSortAI — start backend + PWA server
+# Usage: ./start_backend.sh          (HTTP — desktop/Android Chrome)
+#        ./start_backend.sh --ssl    (HTTPS — required for iPhone camera)
 
 PROJECT="$(cd "$(dirname "$0")" && pwd)"
 VENV="$PROJECT/.venv/bin/python"
-BACKEND="$PROJECT/backend"
+APP="$PROJECT/app"
 LOG="$PROJECT/backend_server.log"
 
-# Verifică dacă există modelul
-if [ ! -f "$BACKEND/saved_model/best_model.pth" ]; then
-  echo ""
-  echo "  ⚠️  ATENȚIE: best_model.pth lipsește."
-  echo "  Rulează notebook-ul (Section 18) ca să-l generezi."
-  echo "  Calea necesară: backend/saved_model/best_model.pth"
-  echo ""
-  # Nu oprire — backend-ul returnează JSON de eroare fără model
-fi
+IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null || echo "unknown")
 
-# Detectează IP-ul curent
-IP=$(ipconfig getifaddr en0 2>/dev/null || ipconfig getifaddr en1 2>/dev/null)
-if [ -n "$IP" ]; then
-  echo ""
-  echo "  📱 IP-ul tău local: $IP"
-  echo "  Asigură-te că în mobile_app/src/utils/api.js ai:"
-  echo "  const API_URL = \"http://$IP:8000/predict\";"
-  echo ""
-fi
-
-echo "  🚀 Pornire EcoSortAI backend pe portul 8000..."
-echo "  Log: $LOG"
-echo "  Stop: Ctrl+C"
+echo ""
+echo "  ╔══════════════════════════════════════╗"
+echo "  ║        EcoSortAI Backend             ║"
+echo "  ╚══════════════════════════════════════╝"
 echo ""
 
-# Pornește uvicorn
-cd "$BACKEND" && "$VENV" -m uvicorn main:app \
+# ── Check model ──────────────────────────────────────────────────────────────
+if [ ! -f "$APP/saved_model/best_model.pth" ]; then
+  echo "  ⚠️  Model not found: app/saved_model/best_model.pth"
+  echo "  Run notebook Section 18 to train and export the model."
+  echo "  Backend will start but /predict will return an error until model is placed."
+  echo ""
+fi
+
+# ── SSL mode ──────────────────────────────────────────────────────────────────
+SSL_FLAGS=""
+if [ "$1" = "--ssl" ]; then
+  CERT="$APP/cert/cert.pem"
+  KEY="$APP/cert/key.pem"
+  if [ ! -f "$CERT" ] || [ ! -f "$KEY" ]; then
+    echo "  🔐 Generating self-signed certificate for $IP ..."
+    cd "$APP" && "$VENV" gen_cert.py "$IP"
+    echo ""
+  fi
+  SSL_FLAGS="--ssl-keyfile cert/key.pem --ssl-certfile cert/cert.pem"
+  PROTO="https"
+else
+  PROTO="http"
+fi
+
+# ── Print access URLs ──────────────────────────────────────────────────────────
+echo "  🌐 Open in browser:"
+echo "     $PROTO://localhost:8000"
+if [ -n "$IP" ] && [ "$IP" != "unknown" ]; then
+  echo "     $PROTO://$IP:8000  ← use this on your phone"
+fi
+if [ "$1" != "--ssl" ]; then
+  echo ""
+  echo "  📱 For iPhone (camera requires HTTPS):"
+  echo "     ./start_backend.sh --ssl"
+fi
+echo ""
+echo "  Stop: Ctrl+C   |   Log: backend_server.log"
+echo ""
+
+# ── Start uvicorn ──────────────────────────────────────────────────────────────
+cd "$APP" && "$VENV" -m uvicorn main:app \
   --host 0.0.0.0 \
   --port 8000 \
-  --reload \
+  $SSL_FLAGS \
   2>&1 | tee "$LOG"
