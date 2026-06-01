@@ -1,0 +1,12 @@
+{
+  "plastic": "recyclable",
+  "glass": "recyclable",
+  "metal": "recyclable",
+  "paper": "recyclable",
+  "cardboard": "recyclable",
+  "biological": "organic",
+  "battery": "hazardous",
+  "clothes": "textile",
+  "shoes": "textile",
+  "trash": "landfill"
+}

@@ -1,4 +1,35 @@
-.venv/
+# Python
 __pycache__/
 *.pyc
+*.pyo
+.ipynb_checkpoints/
+
+# Model files (large binaries — place manually in backend/saved_model/)
+*.pth
+*.pt
+*.onnx
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment variables
+.env
+.env.local
+
+# macOS
 .DS_Store
+
+# Node / Expo
+node_modules/
+.expo/
+dist/
+build/
+
+# Editor
+.vscode/
+
+# Project-specific
+CLAUDE.md
+nbconvert_log.txt

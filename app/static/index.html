@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>EcoSortAI</title>
+  <style>
+    /* ── Reset & base ─────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #0b1120;
+      --surface:   #111827;
+      --green:     #22c55e;
+      --green-dim: #16a34a;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --radius:    20px;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif;
+    }
+
+    html, body { height: 100%; background: var(--bg); color: var(--text); overflow: hidden; }
+
+    /* ── Layout ───────────────────────────────────────────────── */
+    #app {
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;           /* dynamic viewport for iPhone notch / home bar */
+      position: relative;
+    }
+
+    /* ── Header ───────────────────────────────────────────────── */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: env(safe-area-inset-top, 16px) 20px 14px;
+      background: linear-gradient(180deg, rgba(11,17,32,.95) 0%, transparent 100%);
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      z-index: 10;
+    }
+    header .logo { font-size: 22px; font-weight: 800; letter-spacing: -.5px; }
+    header .logo span { color: var(--green); }
+    header .badge {
+      font-size: 11px; font-weight: 600; color: var(--green);
+      background: rgba(34,197,94,.15);
+      border: 1px solid rgba(34,197,94,.3);
+      padding: 3px 9px; border-radius: 99px;
+    }
+
+    /* ── Camera viewport ──────────────────────────────────────── */
+    #camera-wrap {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+    }
+    #video {
+      width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* Corner brackets */
+    .bracket {
+      position: absolute;
+      width: 52px; height: 52px;
+      border-color: var(--green);
+      border-style: solid;
+      border-width: 0;
+      opacity: .8;
+    }
+    .bracket.tl { top: 20%; left: 10%; border-top-width: 3px; border-left-width: 3px;  border-radius: 8px 0 0 0; }
+    .bracket.tr { top: 20%; right: 10%; border-top-width: 3px; border-right-width: 3px; border-radius: 0 8px 0 0; }
+    .bracket.bl { bottom: 28%; left: 10%; border-bottom-width: 3px; border-left-width: 3px;  border-radius: 0 0 0 8px; }
+    .bracket.br { bottom: 28%; right: 10%; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 8px 0; }
+
+    /* Scanning line animation */
+    .scan-line {
+      position: absolute;
+      left: 10%; right: 10%;
+      top: 20%; height: 2px;
+      background: linear-gradient(90deg, transparent, var(--green), transparent);
+      animation: scan 2.5s ease-in-out infinite;
+    }
+    @keyframes scan {
+      0%   { top: 20%; opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { top: 72%; opacity: 0; }
+    }
+
+    /* Hint label */
+    .hint {
+      position: absolute;
+      bottom: 30%; left: 50%; transform: translateX(-50%);
+      font-size: 13px; color: var(--muted);
+      background: rgba(11,17,32,.6);
+      backdrop-filter: blur(8px);
+      padding: 5px 14px; border-radius: 99px;
+      white-space: nowrap;
+      pointer-events: none;
+    }
+
+    /* ── Bottom bar ───────────────────────────────────────────── */
+    #bottom-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      padding: 16px 20px env(safe-area-inset-bottom, 24px);
+      background: linear-gradient(0deg, rgba(11,17,32,.97) 0%, transparent 100%);
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      z-index: 10;
+    }
+
+    #capture-btn {
+      width: 72px; height: 72px;
+      border-radius: 50%;
+      border: 4px solid var(--green);
+      background: transparent;
+      cursor: pointer;
+      position: relative;
+      transition: transform .15s, box-shadow .15s;
+      -webkit-tap-highlight-color: transparent;
+    }
+    #capture-btn::after {
+      content: '';
+      position: absolute;
+      inset: 6px;
+      border-radius: 50%;
+      background: var(--green);
+      transition: background .15s;
+    }
+    #capture-btn:active { transform: scale(.93); }
+    #capture-btn.loading::after { background: var(--green-dim); animation: pulse .8s infinite; }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+    #capture-label { font-size: 12px; color: var(--muted); letter-spacing: .5px; }
+
+    /* ── Result card ──────────────────────────────────────────── */
+    #result-card {
+      position: absolute;
+      bottom: 0; left: 0; right: 0;
+      background: var(--surface);
+      border-radius: var(--radius) var(--radius) 0 0;
+      padding: 0 24px env(safe-area-inset-bottom, 32px);
+      z-index: 20;
+      transform: translateY(100%);
+      transition: transform .4s cubic-bezier(.32,1,.5,1);
+    }
+    #result-card.visible { transform: translateY(0); }
+
+    .card-handle {
+      width: 40px; height: 4px;
+      background: rgba(255,255,255,.15);
+      border-radius: 2px;
+      margin: 14px auto 20px;
+    }
+
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      margin-bottom: 18px;
+    }
+    .result-emoji {
+      font-size: 56px;
+      line-height: 1;
+      filter: drop-shadow(0 0 16px currentColor);
+    }
+    .result-title { flex: 1; }
+    .result-label {
+      font-size: 26px;
+      font-weight: 800;
+      text-transform: capitalize;
+      letter-spacing: -.5px;
+    }
+    .result-conf {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    /* Confidence bar */
+    .conf-bar-wrap {
+      height: 6px;
+      background: rgba(255,255,255,.08);
+      border-radius: 3px;
+      margin: 12px 0 18px;
+      overflow: hidden;
+    }
+    .conf-bar {
+      height: 100%;
+      border-radius: 3px;
+      width: 0;
+      transition: width .6s cubic-bezier(.4,0,.2,1) .2s;
+    }
+
+    /* Bin chip */
+    .bin-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 14px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 99px;
+      margin-bottom: 14px;
+      border: 1.5px solid;
+    }
+
+    .tip-text {
+      font-size: 14px;
+      color: var(--muted);
+      line-height: 1.6;
+      margin-bottom: 22px;
+    }
+
+    #scan-again {
+      width: 100%;
+      padding: 15px;
+      border-radius: 14px;
+      border: none;
+      background: var(--green);
+      color: #000;
+      font-size: 16px;
+      font-weight: 700;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background .15s, transform .1s;
+    }
+    #scan-again:active { transform: scale(.98); background: var(--green-dim); }
+
+    /* Error toast */
+    #toast {
+      position: absolute;
+      top: calc(env(safe-area-inset-top, 16px) + 60px);
+      left: 50%; transform: translateX(-50%);
+      background: #dc2626;
+      color: #fff;
+      font-size: 13px;
+      padding: 8px 18px;
+      border-radius: 99px;
+      opacity: 0;
+      transition: opacity .3s;
+      white-space: nowrap;
+      z-index: 30;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+
+    /* Hidden canvas for capture */
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+<div id="app">
+
+  <header>
+    <div class="logo">Eco<span>Sort</span>AI</div>
+    <div class="badge">AI-Powered</div>
+  </header>
+
+  <div id="camera-wrap">
+    <video id="video" autoplay playsinline muted></video>
+    <div class="bracket tl"></div>
+    <div class="bracket tr"></div>
+    <div class="bracket bl"></div>
+    <div class="bracket br"></div>
+    <div class="scan-line"></div>
+    <div class="hint">Point at any waste item</div>
+  </div>
+
+  <div id="bottom-bar">
+    <button id="capture-btn" aria-label="Scan waste"></button>
+    <span id="capture-label">TAP TO SCAN</span>
+  </div>
+
+  <!-- Result card -->
+  <div id="result-card">
+    <div class="card-handle"></div>
+    <div class="result-header">
+      <div class="result-emoji" id="res-emoji">♻️</div>
+      <div class="result-title">
+        <div class="result-label" id="res-label">—</div>
+        <div class="result-conf" id="res-conf">Confidence: —</div>
+      </div>
+    </div>
+    <div class="conf-bar-wrap"><div class="conf-bar" id="res-bar"></div></div>
+    <div class="bin-chip" id="res-bin">🗑️ —</div>
+    <p class="tip-text" id="res-tip">—</p>
+    <button id="scan-again">Scan Again</button>
+  </div>
+
+  <div id="toast">Something went wrong. Please try again.</div>
+
+  <canvas id="canvas"></canvas>
+</div>
+
+<script>
+  const video      = document.getElementById('video');
+  const canvas     = document.getElementById('canvas');
+  const captureBtn = document.getElementById('capture-btn');
+  const resultCard = document.getElementById('result-card');
+  const toast      = document.getElementById('toast');
+  const scanAgain  = document.getElementById('scan-again');
+
+  // ── Start camera ──────────────────────────────────────────────
+  async function startCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } },
+        audio: false,
+      });
+      video.srcObject = stream;
+    } catch (err) {
+      showToast('Camera access denied. Please allow camera permissions.');
+    }
+  }
+
+  // ── Capture & predict ─────────────────────────────────────────
+  captureBtn.addEventListener('click', async () => {
+    if (captureBtn.classList.contains('loading')) return;
+
+    // Draw current frame to hidden canvas
+    canvas.width  = video.videoWidth  || 640;
+    canvas.height = video.videoHeight || 480;
+    canvas.getContext('2d').drawImage(video, 0, 0);
+
+    captureBtn.classList.add('loading');
+
+    canvas.toBlob(async (blob) => {
+      try {
+        const form = new FormData();
+        form.append('file', blob, 'frame.jpg');
+
+        const res = await fetch('/predict', { method: 'POST', body: form });
+        if (!res.ok) throw new Error('Server error');
+        const data = await res.json();
+        showResult(data);
+      } catch {
+        showToast('Could not reach the server. Is it running?');
+      } finally {
+        captureBtn.classList.remove('loading');
+      }
+    }, 'image/jpeg', 0.85);
+  });
+
+  // ── Show result ───────────────────────────────────────────────
+  function showResult({ label, confidence, emoji, bin, color, tip }) {
+    document.getElementById('res-emoji').textContent = emoji;
+    document.getElementById('res-label').textContent = label;
+    document.getElementById('res-conf').textContent  = `Confidence: ${confidence}%`;
+
+    const bar = document.getElementById('res-bar');
+    bar.style.background = color;
+    // Force reflow so the transition fires
+    bar.style.width = '0';
+    requestAnimationFrame(() => requestAnimationFrame(() => {
+      bar.style.width = `${confidence}%`;
+    }));
+
+    const binEl = document.getElementById('res-bin');
+    binEl.textContent   = bin;
+    binEl.style.color   = color;
+    binEl.style.borderColor = color;
+    binEl.style.background  = `${color}18`;
+
+    document.getElementById('res-tip').textContent = tip;
+
+    resultCard.classList.add('visible');
+  }
+
+  // ── Scan again ────────────────────────────────────────────────
+  scanAgain.addEventListener('click', () => {
+    resultCard.classList.remove('visible');
+    document.getElementById('res-bar').style.width = '0';
+  });
+
+  // ── Toast helper ──────────────────────────────────────────────
+  let toastTimer;
+  function showToast(msg) {
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => toast.classList.remove('show'), 3500);
+  }
+
+  startCamera();
+</script>
+</body>
+</html>
