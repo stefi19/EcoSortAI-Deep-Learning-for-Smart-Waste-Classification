@@ -7,7 +7,7 @@
 //   Windows: ipconfig (look for IPv4 Address)
 // Example: "http://192.168.1.100:8000/predict"
 
-const API_URL = "http://YOUR_LOCAL_IP:8000/predict";
+const API_URL = "http://192.168.0.218:8000/predict";
 
 /**
  * Send a captured or selected image to the EcoSortAI backend for classification.
