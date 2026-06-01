@@ -1,8 +1,0 @@
-# CocoaPods — installed by running `pod install` after Xcode is set up
-Pods/
-
-# Xcode build output
-build/
-DerivedData/
-*.xcuserstate
-xcuserdata/

@@ -33,3 +33,8 @@ build/
 # Project-specific
 CLAUDE.md
 nbconvert_log.txt
+backend_server.log
+backend_error.log
+
+# iOS / Xcode (regenerate with: cd mobile_app && npm install && npx expo prebuild --platform ios)
+mobile_app/ios/
