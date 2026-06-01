@@ -1,9 +1,12 @@
-// EcoSortAI — root component.
-// Manages three states: camera, loading, and result.
-// Flow: camera -> [user taps Scan] -> loading -> result -> [user taps Scan Again] -> camera
+import React, { useCallback, useRef, useState } from "react";
+import {
+  Animated,
+  StyleSheet,
+  Text,
+} from "react-native";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import { StatusBar } from "expo-status-bar";
 
-import React, { useState } from "react";
-import { SafeAreaView, StyleSheet } from "react-native";
 import CameraScreen from "./src/components/CameraScreen";
 import LoadingOverlay from "./src/components/LoadingOverlay";
 import ResultCard from "./src/components/ResultCard";
@@ -11,51 +14,109 @@ import { sendImageForPrediction } from "./src/utils/api";
 import { COLORS } from "./src/styles/colors";
 
 export default function App() {
+  const [capturedUri, setCapturedUri] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [error, setError] = useState(null);
+  const [errorMsg, setErrorMsg] = useState(null);
 
-  // Called by CameraScreen when a photo is taken or chosen from gallery
-  async function handleCapture(imageUri) {
+  // Animated value for the error toast fade
+  const toastOpacity = useRef(new Animated.Value(0)).current;
+  const toastTimer   = useRef(null);
+
+  function showError(msg) {
+    setErrorMsg(msg);
+    clearTimeout(toastTimer.current);
+    Animated.sequence([
+      Animated.timing(toastOpacity, { toValue: 1, duration: 250, useNativeDriver: true }),
+      Animated.delay(3000),
+      Animated.timing(toastOpacity, { toValue: 0, duration: 400, useNativeDriver: true }),
+    ]).start(() => setErrorMsg(null));
+  }
+
+  // Called by CameraScreen when a photo is captured or chosen from gallery
+  const handleCapture = useCallback(async (imageUri) => {
+    setCapturedUri(imageUri);
     setLoading(true);
-    setError(null);
+    setResult(null);
     try {
       const prediction = await sendImageForPrediction(imageUri);
-      setResult(prediction);
+      if (prediction.error) {
+        showError(prediction.error);
+        setLoading(false);
+        setCapturedUri(null);
+      } else {
+        setResult(prediction);
+        setLoading(false);
+      }
     } catch (err) {
-      setError("Could not reach the server. Make sure the backend is running.");
-    } finally {
+      showError("Could not reach the server.\nMake sure the backend is running.");
       setLoading(false);
+      setCapturedUri(null);
     }
-  }
+  }, []);
 
-  // Called by ResultCard when the user wants to scan another item
-  function handleScanAgain() {
+  // Called from ResultCard — go back to camera
+  const handleScanAgain = useCallback(() => {
     setResult(null);
-    setError(null);
-  }
+    setCapturedUri(null);
+  }, []);
 
   return (
-    <SafeAreaView style={styles.safe}>
-      {/* Show camera when no result and not loading */}
-      {!result && !loading && (
-        <CameraScreen onCapture={handleCapture} />
+    <SafeAreaProvider>
+      <StatusBar style="light" />
+
+      {/* Camera is always mounted so the preview is instant on return */}
+      <CameraScreen
+        onCapture={handleCapture}
+        active={!result && !loading}
+      />
+
+      {/* Loading overlay — shown over the camera with the captured image */}
+      {loading && capturedUri && (
+        <LoadingOverlay imageUri={capturedUri} />
       )}
 
-      {/* Show result card after a successful prediction */}
-      {result && !loading && (
-        <ResultCard result={result} onScanAgain={handleScanAgain} />
+      {/* Result card — slides up over the camera */}
+      {result && (
+        <ResultCard
+          result={result}
+          imageUri={capturedUri}
+          onScanAgain={handleScanAgain}
+        />
       )}
 
-      {/* Loading overlay sits on top while the request is in flight */}
-      {loading && <LoadingOverlay />}
-    </SafeAreaView>
+      {/* Error toast */}
+      {errorMsg && (
+        <Animated.View style={[styles.toast, { opacity: toastOpacity }]}>
+          <Text style={styles.toastText}>{errorMsg}</Text>
+        </Animated.View>
+      )}
+    </SafeAreaProvider>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: {
-    flex: 1,
-    backgroundColor: COLORS.background,
+  toast: {
+    position: "absolute",
+    top: 60,
+    left: 20,
+    right: 20,
+    backgroundColor: COLORS.error,
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 18,
+    alignItems: "center",
+    zIndex: 100,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+  },
+  toastText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600",
+    textAlign: "center",
+    lineHeight: 20,
   },
 });

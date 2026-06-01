@@ -1,0 +1,48 @@
+{
+  "expo": {
+    "name": "EcoSortAI",
+    "slug": "ecosortai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#2E7D32"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.ecosortai.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSCameraUsageDescription": "EcoSortAI uses the camera to scan and classify waste items for recycling guidance.",
+        "NSPhotoLibraryUsageDescription": "EcoSortAI can read photos from your library to classify waste items.",
+        "NSPhotoLibraryAddUsageDescription": "EcoSortAI can save scanned images to your photo library."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#2E7D32"
+      },
+      "package": "com.ecosortai.app"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EcoSortAI needs camera access to scan waste items for recycling guidance."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EcoSortAI needs access to your photos to classify waste items for recycling."
+        }
+      ]
+    ],
+    "assetBundlePatterns": ["**/*"],
+    "scheme": "ecosortai"
+  }
+}
