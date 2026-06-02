@@ -34,8 +34,8 @@ metal    paper       plastic    shoes    trash
 |---|---|---|---|
 | SimpleCNN | Educational baseline | ~26% | ~20% |
 | MobileNetV3-Small | Lightweight edge / smart bin | ~92% | ~92% |
-| ResNet50 | Classical CNN benchmark | ~94% | ~94% |
-| EfficientNet-B0 | Best single model | ~95% | ~94% |
+| ResNet50 | Best accuracy model and production backend model | ~94% | ~94% |
+| EfficientNet-B0 | Strong single-model candidate | ~95% | ~94% |
 | EfficientNet + ResNet50 Ensemble | Accuracy-focused server model | ~95%+ | ~95%+ |
 | Multi-task EfficientNet | Predicts class + bin category | ~95% | ~94% |
 
@@ -48,7 +48,7 @@ metal    paper       plastic    shoes    trash
 ```
 .
 ├── model.ipynb               Main notebook (run from top to bottom)
-├── best_model.pth            Exported EfficientNet-B0 weights (after training)
+├── best_model.pth            Exported ResNet50 weights for backend demo
 ├── Plastic.jpg               Sample image for the notebook demo
 │
 ├── backend/                  FastAPI inference server
@@ -56,12 +56,17 @@ metal    paper       plastic    shoes    trash
 │   ├── model_loader.py
 │   ├── recycling_rules.py
 │   ├── requirements.txt
+│   ├── Dockerfile
+│   ├── README.md
 │   └── saved_model/
-│       └── best_model.pth    Place the trained model here (see below)
+│       ├── .gitkeep
+│       ├── model_metadata.json
+│       └── best_model.pth    Place the trained model here (not committed)
 │
 ├── mobile_app/               React Native + Expo mobile demo
 │   ├── App.js
 │   ├── package.json
+│   ├── vercel.json
 │   └── src/
 │       ├── components/
 │       │   ├── CameraScreen.js
@@ -93,6 +98,8 @@ cp best_model.pth backend/saved_model/best_model.pth
 ```
 
 Or the notebook export cell writes directly to `backend/saved_model/best_model.pth`.
+
+The backend currently expects ResNet50 weights at `backend/saved_model/best_model.pth`. If you switch back to EfficientNet-B0 later, update both `backend/model_loader.py` and `backend/saved_model/model_metadata.json`.
 
 ### 2. Install dependencies
 
@@ -148,12 +155,12 @@ cd mobile_app
 npm install
 ```
 
-### 2. Set your local IP address
+### 2. Set your local API URL
 
-Open `mobile_app/src/utils/api.js` and replace `YOUR_LOCAL_IP` with your laptop's local network IP:
+Set `EXPO_PUBLIC_API_URL` to your laptop's local network IP:
 
-```javascript
-const API_URL = "http://192.168.1.100:8000/predict";
+```bash
+EXPO_PUBLIC_API_URL=http://192.168.1.100:8000 npx expo start
 ```
 
 > **Why?** On a real phone, `localhost` points to the phone itself, not your laptop.
@@ -176,13 +183,116 @@ Phone camera (or gallery)
   -> image captured as JPEG
   -> FormData POST to http://<your-ip>:8000/predict  (field name: "file")
   -> FastAPI backend
-  -> EfficientNet-B0 inference (224x224, ImageNet normalisation)
+  -> ResNet50 inference (224x224, ImageNet normalisation)
   -> softmax probabilities
   -> top-3 predictions selected
   -> RECYCLING_RULES lookup for bin category and advice
   -> JSON response
   -> mobile result card with class, confidence bar, top-3, advice, warning
 ```
+
+---
+
+## Free Deployment Plan
+
+EcoSortAI can be deployed with a free backend on Hugging Face Spaces Docker and a free Expo web frontend on Vercel.
+
+### Backend: Hugging Face Spaces Docker
+
+1. Create a new Hugging Face Space.
+2. Choose **Docker** as the Space SDK.
+3. Use the `backend/` folder as the Space content.
+4. Keep the app port set to `7860`.
+5. Place the trained model at:
+
+```text
+saved_model/best_model.pth
+```
+
+Inside this repository, that file lives at:
+
+```text
+backend/saved_model/best_model.pth
+```
+
+The model file is intentionally ignored by git. Do not commit large `.pth`, `.pt`, or `.onnx` files.
+
+Test the deployed backend:
+
+```text
+GET /health
+```
+
+Prediction endpoint:
+
+```text
+POST /predict
+```
+
+The prediction request must upload the image using multipart form data with field name `file`.
+
+### Frontend: Vercel
+
+Deploy the `mobile_app/` folder as the Vercel project root.
+
+Use this build command:
+
+```bash
+npm run build:web
+```
+
+Use this output directory:
+
+```text
+dist
+```
+
+Set this Vercel environment variable:
+
+```text
+EXPO_PUBLIC_API_URL=https://YOUR_USERNAME-ecosortai-backend.hf.space
+```
+
+The frontend reads this variable in `mobile_app/src/utils/api.js` and sends predictions to:
+
+```text
+${EXPO_PUBLIC_API_URL}/predict
+```
+
+### Local Run Instructions
+
+Backend:
+
+```bash
+cd backend
+pip install -r requirements.txt
+uvicorn main:app --host 0.0.0.0 --port 8000
+```
+
+Frontend:
+
+```bash
+cd mobile_app
+npm install
+EXPO_PUBLIC_API_URL=http://YOUR_LOCAL_IP:8000 npx expo start
+```
+
+Replace `YOUR_LOCAL_IP` with your laptop's Wi-Fi IP address, for example `192.168.1.100`. Do not use `localhost` when testing from a real phone, because it points to the phone itself.
+
+### Demo Flow
+
+```text
+Phone browser / Vercel frontend
+  -> camera or gallery image
+  -> Hugging Face FastAPI backend
+  -> PyTorch model prediction
+  -> recycling rules
+  -> result card in the app
+```
+
+### Cold Start Note
+
+On free hosting, the backend may have a cold start. For live demos, open `/health` a few minutes before presenting.
 
 ---
 

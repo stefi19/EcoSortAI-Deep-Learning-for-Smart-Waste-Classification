@@ -1,13 +1,17 @@
 # Python
 __pycache__/
+**__pycache__/
+**pycache**/
 *.pyc
 *.pyo
 .ipynb_checkpoints/
 
-# Model weights (place manually in app/saved_model/)
+# Model weights (place manually in saved_model folders)
 *.pth
 *.pt
 *.onnx
+backend/saved_model/*.pth
+backend/saved_model/*.pt
 
 # Virtual environments
 .venv/
@@ -17,6 +21,12 @@ env/
 # Environment variables
 .env
 .env.local
+
+# JavaScript / Expo / web build outputs
+node_modules/
+.expo/
+dist/
+build/
 
 # macOS
 .DS_Store

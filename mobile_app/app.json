@@ -1,0 +1,27 @@
+{
+  "expo": {
+    "name": "EcoSortAI",
+    "slug": "ecosortai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "web": {
+      "bundler": "metro",
+      "output": "single"
+    },
+    "plugins": [
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "EcoSortAI uses the camera to scan one waste item and suggest the right recycling bin."
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "EcoSortAI can classify a waste image selected from your gallery."
+        }
+      ]
+    ]
+  }
+}
