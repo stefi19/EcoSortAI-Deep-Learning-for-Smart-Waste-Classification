@@ -1,5 +1,5 @@
 {
-  "best_model": "EfficientNet-B0",
+  "best_model": "ResNet50",
   "num_classes": 10,
   "classes": [
     "battery",
@@ -22,20 +22,20 @@
   ],
   "results": {
     "SimpleCNN": {
-      "accuracy": 0.2616,
-      "f1": 0.1982
+      "accuracy": 0.1115,
+      "f1": 0.0595
     },
     "MobileNetV3-Small": {
-      "accuracy": 0.9239,
-      "f1": 0.9176
+      "accuracy": 0.9081,
+      "f1": 0.898
     },
     "ResNet50": {
-      "accuracy": 0.9391,
-      "f1": 0.9363
+      "accuracy": 0.9554,
+      "f1": 0.9519
     },
     "EfficientNet-B0": {
-      "accuracy": 0.9456,
-      "f1": 0.9396
+      "accuracy": 0.9288,
+      "f1": 0.9216
     }
   }
 }
